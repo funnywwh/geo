@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	EARTHRADIUS = 6370996.81
-	F_ZERO      = 2e-10
+	EARTHRADIUS float64 = 6370996.81
+	F_ZERO      float64 = 2e-10
 )
 
 type Point struct {
@@ -47,6 +47,7 @@ func (this *Polyline) GetBounds() (rt *Rect) {
 		min = math.Min(min, v.Lat)
 		max = math.Max(max, v.Lat)
 	}
+	rt = new(Rect)
 	rt.SouthWest.Lat = min
 	rt.NorthEast.Lat = max
 
@@ -69,6 +70,9 @@ func (this *Polyline) GetBounds() (rt *Rect) {
  * @returns {Number} 两点之间距离，单位为米
  */
 func GetDistance(point1, point2 *Point) float64 {
+	if point1.Equals(point2) {
+		return 0
+	}
 	point1.Lng = getLoop(point1.Lng, -180, 180)
 	point1.Lat = getRange(point1.Lat, -74, 74)
 	point2.Lng = getLoop(point2.Lng, -180, 180)
@@ -80,7 +84,13 @@ func GetDistance(point1, point2 *Point) float64 {
 	x2 = DegreeToRad(point2.Lng)
 	y2 = DegreeToRad(point2.Lat)
 
-	return EARTHRADIUS * math.Acos((math.Sin(y1)*math.Sin(y2) + math.Cos(y1)*math.Cos(y2)*math.Cos(x2-x1)))
+	bb := (math.Sin(y1)*math.Sin(y2) + math.Cos(y1)*math.Cos(y2)*math.Cos(x2-x1))
+	if bb < -1 {
+		bb = -1
+	} else if bb > 1 {
+		bb = 1
+	}
+	return EARTHRADIUS * math.Acos(bb)
 
 }
 
